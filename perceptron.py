@@ -15,31 +15,32 @@ class SimplePerceptron():
         self.num_patterns = y.size
         self.x = x
         self.y_desired = y
-        self.y_trained = np.zeros(self.num_patterns) 
-        self.W = np.random.rand(self.input_dim)
+        
+        self.W = np.zeros(self.input_dim)
         self.etha = etha # Learning rate
 
     def train(self):
         iter_counter = 0
         train_success = False
-        timed_out = False
 
+        # Initialize weight vector in random numbers
+        self.W = np.random.rand(self.input_dim) 
+        y_trained = np.zeros(self.num_patterns) 
         # Train until trained output is equal to desired output or until maximum number of iterations is reached
         while True:
             # Pick random pattern at a time
             iter_counter += 1
             for p in np.random.permutation(self.num_patterns):  
-                self.y_trained[p] = sgn(np.dot(self.W,self.x[:,p]),0)
-                delta_W = self.etha * self.x[:,p] * (self.y_desired[p]-self.y_trained[p])
+                y_trained[p] = sgn(np.dot(self.W,self.x[:,p]),0)
+                delta_W = self.etha * self.x[:,p] * (self.y_desired[p]-y_trained[p])
                 
                 self.W = self.W + delta_W
                 
             
-            if np.array_equal(self.y_trained, self.y_desired):
+            if np.array_equal(y_trained, self.y_desired):
                 train_success = True
                 break
             elif iter_counter > MAX_ITERATIONS:
-                timed_out = True
                 break
             
         return train_success    
