@@ -1,6 +1,11 @@
 from perceptron import SimplePerceptron
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
+
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s") 
+log = logging.getLogger(__name__) 
+
 
 def main():
     # AND
@@ -10,11 +15,14 @@ def main():
     percep = SimplePerceptron(x,y)
     train_success = percep.train()
     print(percep.W)
+
     if train_success:
-        print("TRAIN SUCCESS")
+        log.info("TRAIN SUCCESS")
     else:
-        print("TRAIN FAILURE")
-    print("trained y is: {}".format(percep.y_trained))
+        log.error("TRAIN FAILURE")
+        exit()
+
+    log.info("Output obteined from trained perceptron: {}".format(percep.get_output(x)))
     plt.plot()
 
 if __name__ == '__main__':
