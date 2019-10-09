@@ -26,11 +26,11 @@ class SimplePerceptron():
 
         # Train until trained output is equal to desired output or until maximum number of iterations is reached
         while True:
-            # Pick random sample at a time
+            # Pick random pattern at a time
             iter_counter += 1
-            for sample_i in np.random.permutation(self.num_patterns):  
-                self.y_trained[sample_i] = sgn(np.dot(self.W,self.x[:,sample_i]),0)
-                delta_W = self.etha * self.x[:,sample_i] * (self.y_desired[sample_i]-self.y_trained[sample_i])
+            for p in np.random.permutation(self.num_patterns):  
+                self.y_trained[p] = sgn(np.dot(self.W,self.x[:,p]),0)
+                delta_W = self.etha * self.x[:,p] * (self.y_desired[p]-self.y_trained[p])
                 
                 self.W = self.W + delta_W
                 
@@ -43,7 +43,21 @@ class SimplePerceptron():
                 break
             
         return train_success    
-            
+    
+    
+    def get_output(self, x_input): # Expects a list or an array
+        # Convert to numpy array
+        x_input = np.array(x_input)
+
+        # Validate input dimension is correct
+        input_rows = x_input.shape[0] 
+        if input_rows != len(self.W):
+            log.error("Input dimension {} doesnt match weight matrix dimension {}.".format(x_input.shape,self.W.shape))
+            sys.exit(1)
+        
+        result = np.dot(self.W, x_input)
+        result = np.vectorize(sgn)(result)
+        return result           
 
 if __name__ == '__main__':
     
@@ -53,8 +67,7 @@ if __name__ == '__main__':
 
     percep = SimplePerceptron(x,y)
     percep.train()
-    print(percep.W)
-    print("trained y is: {}".format(percep.y_trained))
+    log.info("Output obteined from trained perceptron: {}".format( percep.get_output(x) ) )
 
     plt.plot()
 
