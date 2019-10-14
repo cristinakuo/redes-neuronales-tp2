@@ -3,7 +3,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s") 
 log = logging.getLogger(__name__) 
 
-MAX_ITER = 10
+MAX_ITER = 5000
 # Only for two layers
 class MultiLayerPerceptron(): 
     def __init__(self,input_neurons,hidden_neurons,output_neurons):
@@ -100,22 +100,18 @@ class MultiLayerPerceptron():
         while True:
             it += 1
             self.trainingIteration()
-
-            if ( np.array_equal(self.evaluateInputPatterns(), self.patterns_outputs)):
+            expected = self.patterns_outputs
+            reality = self.evaluateInputPatterns()
+            if ( np.array_equal(expected, reality)):
                 log.info("TRAIN SUCCESS")
                 break
             if (it > MAX_ITER):
                 log.error("TRAINING FAILED")
                 break
-
-            print(self.weights)
-
-
-        
-
 if __name__ == '__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
     XOR_output = np.array([-1,1,1,-1])
     perceptron = MultiLayerPerceptron(3,2,1)
     perceptron.setPatterns(XOR_input,XOR_output)
     perceptron.train()
+    print(perceptron.evaluateInputPatterns())
