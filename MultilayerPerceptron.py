@@ -49,10 +49,11 @@ class MultiLayerPerceptron():
         for p in np.random.permutation(self.num_patterns):
             x_input = self.x[:,p]
 
-            # Forward
+            # ########## Forward
             i=0
             h_list = []
             x_inputs = []
+            
             for weight_matrix in self.weights:
 
                 h = np.dot(weight_matrix,x_input)
@@ -65,18 +66,18 @@ class MultiLayerPerceptron():
             h_array = np.array(h_list)
             x_inputs = np.array(x_inputs)
             
-            # Backward
-            it_list = [0,1]
-            for m in reversed(it_list):
-                current_weight = self.weights[m]
-                deltas_m = self.g_deriv(h_array[m])*(self.y[p]-x_input)
+            # ######### Backward
+            it_list = [1]
+            m=1
+            deltas_m = self.g_deriv(h_array[m])*(self.y[p]-x_input)
+            dW = self.etha * x_inputs[m-1] * deltas_m
+            self.weights[m] += dW
 
-                w_rows,_=current_weight.shape
-                deltas_m_arr = np.repeat(deltas_m, w_rows)
-                deltas_m_prev = np.vectorize(self.g_deriv)(h_array[m]) * (current_weight*deltas_m_arr).sum(axis=1)
-                dW = - self.etha * x_inputs[m-1]* deltas_m 
-                print("deltas is:", deltas_m)
-                print("dW is:",dW)
+            current_weight = self.weights[m]
+            temp = current_weight*deltas_m
+            deltas_m = np.multiply(np.vectorize(self.g_deriv)(h_array[m-1]),temp)
+            dW = self.etha * np.array([np.multiply(a,b) for a,b in zip(x_input,deltas_m)])
+            self.weights[m-1] += dW
             break
         
 
