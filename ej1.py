@@ -1,4 +1,4 @@
-from perceptron import SimplePerceptron
+from SimplePerceptron import SimplePerceptron
 import matplotlib.pyplot as plt
 import numpy as np
 import logging
@@ -12,7 +12,8 @@ def main():
     x = np.array([[-1,-1, 1, 1],[-1,-1,-1,1],[1,1,1,1]])
     y = np.array([-1,-1,-1,1])
 
-    percep = SimplePerceptron(x,y)
+    percep = SimplePerceptron(3,1)
+    percep.setPatterns(x,y)
     train_success = percep.train()
     print(percep.W)
 

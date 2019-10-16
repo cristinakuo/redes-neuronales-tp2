@@ -1,4 +1,4 @@
-from perceptron import SimplePerceptron
+from SimplePerceptron import SimplePerceptron
 from utils import *
 import numpy as np
 import matplotlib
@@ -28,7 +28,8 @@ def main():
         
         # Using the same patterns, train with all possible desired outputs
         for y_d in desired_y_permutations:
-            myPercep = SimplePerceptron(patterns,y_d)
+            myPercep = SimplePerceptron(N,1)
+            myPercep.setPatterns(patterns,y_d)
             learned = myPercep.train()
             if learned:
                 num_learned_patterns += 1
