@@ -106,14 +106,17 @@ class MultiLayerPerceptron():
         while True:
             it += 1
             self.trainingIteration()
+            
             expected = self.patterns_outputs
             reality = self.evaluateInputPatterns()
-            if ( np.array_equal(expected, reality)):
+            
+            if ( np.allclose(expected, reality, atol=1e-2)):
                 log.info("TRAIN SUCCESS")
                 break
             if (it > MAX_ITER):
                 log.error("TRAINING FAILED")
                 break
+            
 if __name__ == '__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
     XOR_output = np.array([-1,1,1,-1])
