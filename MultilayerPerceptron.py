@@ -3,36 +3,33 @@ import logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s") 
 log = logging.getLogger(__name__) 
 
-class MultiLayerPerceptron():   
-    def __init__(self, x, y, layers, layers_dim):
-        self.x = x
-        self.y = y
-        self.input_dim,_ = x.shape
-        self.output_dim = 1 # TODO: this is hardcoded
-        self.num_patterns = len(y)
-        self.layers = [] # Includes input layer
-        self.layers.append(np.zeros(self.input_dim))
-        self.etha = 0.95 # Learning rate
+MAX_ITER = 2000
+# Only for two layers
+class MultiLayerPerceptron(): 
+    def __init__(self,input_neurons,hidden_neurons,output_neurons):
+        self.input_neurons = input_neurons
+        self.hidden_neurons = hidden_neurons
+        self.output_neurons = output_neurons
+        self.layers = 2
+
+    def setPatterns(self,input_patterns,desired_output):
+        rows,cols = input_patterns.shape
+        if self.input_neurons != rows:
+            raise Exception("Patterns input dimension does not match Perceptron input dimensions {}.".format(rows,self.input_neurons))
+        # TODO: check output neurons
+        self.patterns_inputs = input_patterns
+        self.patterns_outputs = desired_output   
+        self.weights = np.array(2)
+        self.initWeights()
+        self.num_patterns = cols
+
+    def initWeights(self):
+        a = np.random.rand(self.hidden_neurons,self.input_neurons)
+        b = np.random.rand(self.output_neurons,self.hidden_neurons)
         
-        for i in range(layers-1):
-            self.layers.append(np.zeros(layers_dim[i]))
+        c = [a,b]
 
-        self.layers.append(np.zeros(self.output_dim))
-        print(self.layers)
-
-        self.weights = list()
-        self.init_weight(layers_dim)
-
-    def init_weight(self,layers_dim):
-        n = 0 # index to get layers dim
-
-        for layer in self.layers[:-1]:
-            self.weights.append( np.random.rand( layers_dim[n],len(layer)) )
-        
-            n = n + 1
-        
-        # DEBUG
-        print("Initial weight matrices are: {}".format(self.weights))
+        self.weights = np.array(c)
 
     def g(self,h):
         return np.tanh(h)
@@ -40,54 +37,88 @@ class MultiLayerPerceptron():
     def g_deriv(self,h):
         return (1-np.power(self.g(h),2))
 
-    def train(self):
-        # For each layer get the output
-        # This output has to be fed into next layer
+    def forwardPropagation(self,V_input):
+        V_list = []
+        h_list = []
+        V_list.append(V_input)
+
+        Vm_prev = V_input
+        for m in range(self.layers):
+            weighted_sum = np.dot(self.weights[m],Vm_prev)
+            V_m = np.vectorize(self.g)(weighted_sum)
+            
+            V_list.append(V_m)
+            h_list.append(weighted_sum)
+
+            Vm_prev = V_m
+
+        return V_list,h_list
+    
+    def getDeltaWeight(self, delta, V):
+        dW = np.outer(delta,V)
+        return dW
+
+    def computeLastDelta(self,last_h,desired_output,actual_output):
+        delta_M = np.vectorize(self.g_deriv)(last_h)*(desired_output-actual_output)
+        return delta_M
+
+    def backPropagation(self,h_list, delta_M):
+        deltas = []
+        deltas.append(delta_M)
+        # TODO: make loop
+        delta_m = delta_M
+        delta_m_prev = np.vectorize(self.g_deriv)(h_list[0]) * self.weights[1]*delta_M
+        deltas.append(delta_m_prev)
+        deltas = list(reversed(deltas))
+        return deltas
         
-        # Getting the output is getting h for each node
-        # Get random pattern
+
+    def evaluateInputPatterns(self):
+        output = np.zeros(self.num_patterns)
+        for i in range(self.num_patterns):
+            V_list,_ = self.forwardPropagation(self.patterns_inputs[:,i])
+            output[i] = V_list[-1]
+        return output
+
+    def updateWeights(self, deltas, V_list):
+
+        dW = self.getDeltaWeight(deltas[0],V_list[0])
+        self.weights[0] += dW
+        dW = self.getDeltaWeight(deltas[1],V_list[1])
+        self.weights[1] += dW
+
+    def trainingIteration(self):
         for p in np.random.permutation(self.num_patterns):
-            x_input = self.x[:,p]
-
-            # ########## Forward
-            i=0
-            h_list = []
-            x_inputs = []
+            V_input = self.patterns_inputs[:,p]
+            desired_output = self.patterns_inputs[0][p] # TODO: corregir por si la salida es de mas dimensiones
             
-            for weight_matrix in self.weights:
-
-                h = np.dot(weight_matrix,x_input)
-                x_input = self.g(h)
-
-                i = i+1
-                h_list.append(h)
-                x_inputs.append(x_input)
-
-            h_array = np.array(h_list)
-            x_inputs = np.array(x_inputs)
+            V_list, h_list = self.forwardPropagation(V_input)
             
-            # ######### Backward
-            it_list = [1]
-            m=1
-            deltas_m = self.g_deriv(h_array[m])*(self.y[p]-x_input)
-            dW = self.etha * x_inputs[m-1] * deltas_m
-            self.weights[m] += dW
+            delta_M = self.computeLastDelta(h_list[-1],desired_output,V_list[-1])
+            
+            deltas = self.backPropagation(h_list,desired_output)
+            
+            self.updateWeights(deltas,V_list)
+           
 
-            current_weight = self.weights[m]
-            temp = current_weight*deltas_m
-            deltas_m = np.multiply(np.vectorize(self.g_deriv)(h_array[m-1]),temp)
-            dW = self.etha * np.array([np.multiply(a,b) for a,b in zip(x_input,deltas_m)])
-            self.weights[m-1] += dW
-            break
-        
-
+    def train(self):    
+        it = 0
+        while True:
+            it += 1
+            self.trainingIteration()
+            expected = self.patterns_outputs
+            reality = self.evaluateInputPatterns()
+            if ( np.array_equal(expected, reality)):
+                log.info("TRAIN SUCCESS")
+                break
+            if (it > MAX_ITER):
+                log.error("TRAINING FAILED")
+                break
 if __name__ == '__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
     XOR_output = np.array([-1,1,1,-1])
-    layers_dim = np.array([2,1]) # includes output dim
-    perceptron = MultiLayerPerceptron(XOR_input,XOR_output,2,layers_dim)  
-    perceptron.train()  
 
-
-
-    
+    perceptron = MultiLayerPerceptron(3,2,1)
+    perceptron.setPatterns(XOR_input,XOR_output)
+    perceptron.train()
+    print("Actual output is:", perceptron.evaluateInputPatterns())
