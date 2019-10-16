@@ -30,6 +30,9 @@ class MultiLayerPerceptron():
         c = [a,b]
         self.weights = np.array(c)
 
+    def getInputOutputOfPattern(self,p):
+        return (self.patterns_inputs[:,p], self.patterns_inputs[0][p])
+
     def g_deriv(self,h):
         return (1-np.power(self.g(h),2))
 
@@ -85,13 +88,10 @@ class MultiLayerPerceptron():
 
     def trainingIteration(self):
         for p in np.random.permutation(self.num_patterns):
-            V_input = self.patterns_inputs[:,p]
-            desired_output = self.patterns_inputs[0][p] # TODO: corregir por si la salida es de mas dimensiones
+            V_input,desired_output = self.getInputOutputOfPattern(p)    
             
             V_list, h_list = self.forwardPropagation(V_input)
-            
-            delta_M = self.computeLastDelta(h_list[-1],desired_output,V_list[-1])
-            
+            delta_M = self.computeLastDelta(h_list[-1],desired_output,V_list[-1])    
             deltas = self.backPropagation(h_list,delta_M)
             
             self.updateWeights(deltas,V_list)
