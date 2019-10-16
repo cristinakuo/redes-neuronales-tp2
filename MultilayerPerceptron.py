@@ -11,6 +11,7 @@ class MultiLayerPerceptron():
         self.hidden_neurons = hidden_neurons
         self.output_neurons = output_neurons
         self.layers = 2
+        self.g = np.tanh
 
     def setPatterns(self,input_patterns,desired_output):
         rows,cols = input_patterns.shape
@@ -20,19 +21,14 @@ class MultiLayerPerceptron():
         self.patterns_inputs = input_patterns
         self.patterns_outputs = desired_output   
         self.weights = np.array(2)
-        self.initWeights()
+        self.initWeightsRandomly()
         self.num_patterns = cols
 
-    def initWeights(self):
+    def initWeightsRandomly(self):
         a = np.random.rand(self.hidden_neurons,self.input_neurons)
         b = np.random.rand(self.output_neurons,self.hidden_neurons)
-        
         c = [a,b]
-
         self.weights = np.array(c)
-
-    def g(self,h):
-        return np.tanh(h)
 
     def g_deriv(self,h):
         return (1-np.power(self.g(h),2))
