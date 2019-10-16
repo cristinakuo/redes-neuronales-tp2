@@ -15,7 +15,7 @@ class MultiLayerPerceptron():
     def setPatterns(self,input_patterns,desired_output):
         rows,cols = input_patterns.shape
         if self.input_neurons != rows:
-            raise Exception("Patterns input dimension does not match Perceptron input dimensions {}.".format(rows,self.input_neurons))
+            raise Exception("Patterns input dimension {} does not match Perceptron input dimensions {}.".format(rows,self.input_neurons))
         # TODO: check output neurons
         self.patterns_inputs = input_patterns
         self.patterns_outputs = desired_output   
@@ -67,7 +67,7 @@ class MultiLayerPerceptron():
         deltas.append(delta_M)
         # TODO: make loop
         delta_m = delta_M
-        delta_m_prev = np.vectorize(self.g_deriv)(h_list[0]) * self.weights[1]*delta_M
+        delta_m_prev = np.vectorize(self.g_deriv)(h_list[0]) * self.weights[1]*delta_m
         deltas.append(delta_m_prev)
         deltas = list(reversed(deltas))
         return deltas
@@ -96,7 +96,7 @@ class MultiLayerPerceptron():
             
             delta_M = self.computeLastDelta(h_list[-1],desired_output,V_list[-1])
             
-            deltas = self.backPropagation(h_list,desired_output)
+            deltas = self.backPropagation(h_list,delta_M)
             
             self.updateWeights(deltas,V_list)
            
