@@ -1,5 +1,9 @@
 import numpy as np
 import logging
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s") 
 log = logging.getLogger(__name__) 
 
@@ -25,6 +29,7 @@ class MultiLayerPerceptron():
         self.num_patterns = cols
 
     def initWeightsRandomly(self):
+        
         a = np.random.rand(self.hidden_neurons,self.input_neurons)
         b = np.random.rand(self.output_neurons,self.hidden_neurons)
         c = [a,b]
@@ -54,11 +59,11 @@ class MultiLayerPerceptron():
         return V_list,h_list
     
     def getDeltaWeight(self, delta, V):
-        dW = np.outer(delta,V)
+        dW = 0.1*np.outer(delta,V)
         return dW
 
     def computeLastDelta(self,last_h,desired_output,actual_output):
-        delta_M = np.vectorize(self.g_deriv)(last_h)*(desired_output-actual_output)
+        delta_M = (self.g_deriv)(last_h)*(desired_output-actual_output) #TODO: vectorize
         return delta_M
 
     def backPropagation(self,h_list, delta_M):
@@ -66,7 +71,7 @@ class MultiLayerPerceptron():
         deltas.append(delta_M)
         # TODO: make loop
         delta_m = delta_M
-        delta_m_prev = np.vectorize(self.g_deriv)(h_list[0]) * self.weights[1]*delta_m
+        delta_m_prev = np.vectorize(self.g_deriv)(h_list[0]) * (self.weights[1]*delta_m)
         deltas.append(delta_m_prev)
         deltas = list(reversed(deltas))
         return deltas
@@ -80,11 +85,9 @@ class MultiLayerPerceptron():
         return output
 
     def updateWeights(self, deltas, V_list):
-
-        dW = self.getDeltaWeight(deltas[0],V_list[0])
-        self.weights[0] += dW
-        dW = self.getDeltaWeight(deltas[1],V_list[1])
-        self.weights[1] += dW
+        for m in range(self.layers):
+            dW = self.getDeltaWeight(deltas[m],V_list[m])
+            self.weights[m] += dW
 
     def trainingIteration(self):
         for p in np.random.permutation(self.num_patterns):
@@ -92,27 +95,45 @@ class MultiLayerPerceptron():
             
             V_list, h_list = self.forwardPropagation(V_input)
             delta_M = self.computeLastDelta(h_list[-1],desired_output,V_list[-1])    
-            deltas = self.backPropagation(h_list,delta_M)
+            delta_list = self.backPropagation(h_list,delta_M)
             
-            self.updateWeights(deltas,V_list)
+            self.updateWeights(delta_list,V_list)
            
 
     def train(self):    
         it = 0
+        errors = []
+        real_outputs = []
         while True:
             it += 1
             self.trainingIteration()
             
             expected = self.patterns_outputs
-            reality = self.evaluateInputPatterns()
+            real = self.evaluateInputPatterns()
             
-            if ( np.allclose(expected, reality, atol=1e-2)):
+            errors.append(((expected - real)**2).sum())
+            real_outputs.append(real[2])
+            if ( np.allclose(expected, real, atol=1e-2)):
                 log.info("TRAIN SUCCESS")
                 break
             if (it > MAX_ITER):
                 log.error("TRAINING FAILED")
                 break
+
             
+        
+        plt.plot(range(it),np.array(errors),'xb')
+        plt.xlabel("Iteraciones")
+        plt.ylabel("Error=sum((expected-real)**2)")
+        plt.show()
+
+        plt.plot(range(it),np.array(real_outputs),'xr')
+        plt.xlabel("Iteraciones")
+        plt.show()
+
+        print(self.weights[0])
+        print(self.weights[1])
+
 if __name__ == '__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
     XOR_output = np.array([-1,1,1,-1])
