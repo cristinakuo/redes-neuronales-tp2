@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(
 log = logging.getLogger(__name__) 
 
 MAX_ITER = 2000
-
+TOL = 1e-1
 # Actually, only two layers :-)
 class MultiLayerPerceptron(): 
     def __init__(self,input_neurons,hidden_neurons,output_neurons):
@@ -100,7 +100,6 @@ class MultiLayerPerceptron():
             
             self.updateWeights(delta_list,V_list)
            
-
     def train(self):    
         it = 0
         errors = []
@@ -114,26 +113,22 @@ class MultiLayerPerceptron():
             
             errors.append(((expected - real)**2).sum())
             real_outputs.append(real[2])
-            if ( np.allclose(expected, real, atol=1e-2)):
+            if ( np.allclose(expected, real, atol=TOL)):
                 log.info("TRAIN SUCCESS")
                 break
             if (it > MAX_ITER):
                 log.error("TRAINING FAILED")
                 break
-
-            
         
-        plt.plot(range(it),np.array(errors),'xb')
-        plt.xlabel("Iteraciones")
-        plt.ylabel("Error=sum((expected-real)**2)")
-        plt.show()
+        # DEBUG
+        #plt.plot(range(it),np.array(errors),'xb')
+        #plt.xlabel("Iteraciones")
+        #plt.ylabel("Error=sum((expected-real)**2)")
+        #plt.show()
 
-        plt.plot(range(it),np.array(real_outputs),'xr')
-        plt.xlabel("Iteraciones")
-        plt.show()
-
-        print(self.weights[0])
-        print(self.weights[1])
+        #plt.plot(range(it),np.array(real_outputs),'xr')
+        #plt.xlabel("Iteraciones")
+        #plt.show()
 
 if __name__ == '__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
