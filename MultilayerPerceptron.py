@@ -8,7 +8,8 @@ logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(
 log = logging.getLogger(__name__) 
 
 MAX_ITER = 2000
-# Only for two layers
+
+# Actually, only two layers :-)
 class MultiLayerPerceptron(): 
     def __init__(self,input_neurons,hidden_neurons,output_neurons):
         self.input_neurons = input_neurons
@@ -36,7 +37,7 @@ class MultiLayerPerceptron():
         self.weights = np.array(c)
 
     def getInputOutputOfPattern(self,p):
-        return (self.patterns_inputs[:,p], self.patterns_inputs[0][p])
+        return (self.patterns_inputs[:,p], self.patterns_outputs[p])
 
     def g_deriv(self,h):
         return (1-np.power(self.g(h),2))
