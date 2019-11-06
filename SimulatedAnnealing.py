@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-STD_DEV = 2
-ITERATIONS_PER_TEMPERATURE = 1
+STD_DEV = 4
+ITERATIONS_PER_TEMPERATURE = 4
 TEMPERATURE_DECREASING_FACTOR = 0.99
 class SimulatedAnnealing():
     def __init__(self,input_neurons,hidden_neurons,output_neurons, init_temp):
@@ -21,7 +21,7 @@ class SimulatedAnnealing():
         rows,cols = input_patterns.shape
         if self.input_neurons != rows:
             raise Exception("Patterns input dimension {} does not match Perceptron input dimensions {}.".format(rows,self.input_neurons))
-        # TODO: check output neurons
+        # TODO: check output neurons dimensions
         self.patterns_inputs = input_patterns
         self.patterns_outputs = desired_output
         self.num_patterns = cols   
@@ -59,22 +59,14 @@ class SimulatedAnnealing():
         return (0.5*np.mean(np.square(desired_output-actual_output)))
     
     def getWeightsWithNormal(self):
-        delta_W = np.random.normal(self.hidden_neurons,self.input_neurons)
+        delta_W = np.random.normal(0,STD_DEV, size=(self.hidden_neurons,self.input_neurons))
         new_weight_1 = self.weights[0] + delta_W
-        delta_W = np.random.normal(self.output_neurons,self.hidden_neurons)
+        delta_W = np.random.normal(0,STD_DEV, size=(self.output_neurons,self.hidden_neurons))
         new_weight_2 = self.weights[1] + delta_W        
         return np.array([new_weight_1, new_weight_2])
 
-    def acceptanceProb(self, dE):
-        try:
-            probability = 1/np.exp(dE/self.temperature)
-            return probability
-        except ZeroDivisionError:
-            print("Catching ZeroDivisionError...")
-            exit()
-
-    def acceptWithProb(self, delta_energy):
-        if (np.random.rand() <= self.acceptanceProb(delta_energy) ): # random() returns value between 0 and 1
+    def acceptWithProb(self, dE):
+        if (np.random.rand() <= np.exp(-dE/self.temperature) ): # random() returns value between 0 and 1
             return True
         else:
             return False
@@ -100,7 +92,7 @@ class SimulatedAnnealing():
         # Forward propagation of input patterns with normally generated weights
         new_weights = self.getWeightsWithNormal()
         for p in np.random.permutation(self.num_patterns):
-            V_input,desired_output = self.getInputOutputOfPattern(p)    
+            V_input = self.patterns_inputs[:,p]   
             actual_output[p] = self.forwardPropagation(V_input, new_weights)
             
         new_energy = self.getErrorEnergy(self.patterns_outputs, actual_output)
