@@ -1,7 +1,10 @@
 # Energia, es el error, lo quiere minimizar
 import numpy as np
+import matplotlib.pyplot as plt
 
 STD_DEV = 4
+ITERATIONS_PER_TEMPERATURE = 1
+TEMPERATURE_DECREASING_FACTOR = 0.99
 class SimulatedAnnealing():
     def __init__(self,input_neurons,hidden_neurons,output_neurons, init_temp):
         self.input_neurons = input_neurons
@@ -11,6 +14,8 @@ class SimulatedAnnealing():
         self.g = np.tanh
         self.temperature = init_temp
         self.iterations_per_temp_count = 0
+        self.currentEnergy = 0
+        self.num_patterns = 0
 
     def setPatterns(self,input_patterns,desired_output):
         rows,cols = input_patterns.shape
@@ -18,15 +23,25 @@ class SimulatedAnnealing():
             raise Exception("Patterns input dimension {} does not match Perceptron input dimensions {}.".format(rows,self.input_neurons))
         # TODO: check output neurons
         self.patterns_inputs = input_patterns
-        self.patterns_outputs = desired_output   
+        self.patterns_outputs = desired_output
+        self.num_patterns = cols   
         self.initWeightsRandomly()
-        self.num_patterns = cols
+        self.initEnergy()
+        
 
     def initWeightsRandomly(self):   
         a = np.random.rand(self.hidden_neurons,self.input_neurons)
         b = np.random.rand(self.output_neurons,self.hidden_neurons)
         c = [a,b]
         self.weights = np.array(c)
+
+    def initEnergy(self):
+        # Calculate initial energy
+        actual_output = np.zeros(self.num_patterns)
+        for p in np.random.permutation(self.num_patterns):
+            V_input,desired_output = self.getInputOutputOfPattern(p)    
+            actual_output[p] = self.forwardPropagation(V_input, self.weights)
+        return (self.getErrorEnergy(desired_output, actual_output))
 
     def getInputOutputOfPattern(self,p):
         return (self.patterns_inputs[:,p], self.patterns_outputs[p])
@@ -36,10 +51,12 @@ class SimulatedAnnealing():
         for m in range(self.layers):
             weighted_sum = np.dot(weights[m],Vm_prev)
             V_m = np.vectorize(self.g)(weighted_sum)
+
+            Vm_prev = V_m
         return V_m
 
-    def getErrorEnergy(self, desired_output, actual_output): # TODO: hacerlo bien
-        return np.square(np.subtract(desired_output,actual_output)).mean() 
+    def getErrorEnergy(self, desired_output, actual_output):
+        return (0.5*np.mean(np.square(desired_output-actual_output)))
     
     def getWeightsWithNormal(self): # TODO: normal
         delta_W = np.random.rand(self.hidden_neurons,self.input_neurons)
@@ -57,7 +74,7 @@ class SimulatedAnnealing():
             exit()
 
     def acceptWithProb(self, delta_energy):
-        if (np.random.random() <= self.acceptanceProb(delta_energy) ): # random() returns value between 0 and 1
+        if (np.random.rand() <= self.acceptanceProb(delta_energy) ): # random() returns value between 0 and 1
             return True
         else:
             return False
@@ -78,40 +95,35 @@ class SimulatedAnnealing():
             self.iterations_per_temp_count += 1
 
     def trainingIteration(self):
-        actual_output = np.zeros(self.output_neurons)
-        new_weights = self.getWeightsWithNormal()
+        actual_output = np.zeros(self.num_patterns)
         
+        # Forward propagation of input patterns with normally generated weights
+        new_weights = self.getWeightsWithNormal()
         for p in np.random.permutation(self.num_patterns):
             V_input,desired_output = self.getInputOutputOfPattern(p)    
             actual_output[p] = self.forwardPropagation(V_input, new_weights)
             
         new_energy = self.getErrorEnergy(self.patterns_outputs, actual_output)
         dE =  new_energy - self.currentEnergy
-        self.updateWeights(dE, new_energy)
-        self.updateTemperature() # TODO: con 0.99 error vs. temp
-        # Camilojm15@gmail.com
-        # Algoritmo Genetico
-
-    # TODO: inicializar energia
+        self.updateWeights(dE, new_weights)
+        self.updateTemperature() 
 
     def train(self):
-        # Calculate initial energy
-        actual_output = np.zeros(self.output_neurons)
-        for p in np.random.permutation(self.num_patterns):
-            V_input,desired_output = self.getInputOutputOfPattern(p)    
-            actual_output[p] = self.forwardPropagation(V_input, self.weights)
-        self.currentEnergy = self.getErrorEnergy(desired_output, actual_output)
-
+        plt.ion()
         it = 0
-        while it < 100: # TODO: poner algun criterio
+        _,axs=plt.subplots(nrows=2,ncols=1)
+        while self.temperature > 0.1: # TODO: poner algun criterio
             self.trainingIteration()
             it += 1
+            axs[0].plot(self.temperature,self.currentEnergy,"*b") # TODO: error vs temp
+        input("Press to continue...")
 
 if __name__=='__main__':
     XOR_input = np.array([[-1,1,-1,1],[-1,-1,1,1],[1,1,1,1]])
     XOR_output = np.array([-1,1,1,-1])
     perceptron = SimulatedAnnealing(3,2,1,init_temp=5)
     perceptron.setPatterns(XOR_input,XOR_output)
-    perceptron.trainingIteration()
+    perceptron.train()
+    print(perceptron.forwardPropagation(XOR_input,perceptron.weights))
 
     # Graficar la curva de temperatura que va bajando...
