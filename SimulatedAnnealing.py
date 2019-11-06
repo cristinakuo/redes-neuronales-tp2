@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-STD_DEV = 4
+STD_DEV = 2
 ITERATIONS_PER_TEMPERATURE = 1
 TEMPERATURE_DECREASING_FACTOR = 0.99
 class SimulatedAnnealing():
@@ -58,10 +58,10 @@ class SimulatedAnnealing():
     def getErrorEnergy(self, desired_output, actual_output):
         return (0.5*np.mean(np.square(desired_output-actual_output)))
     
-    def getWeightsWithNormal(self): # TODO: normal
-        delta_W = np.random.rand(self.hidden_neurons,self.input_neurons)
+    def getWeightsWithNormal(self):
+        delta_W = np.random.normal(self.hidden_neurons,self.input_neurons)
         new_weight_1 = self.weights[0] + delta_W
-        delta_W = np.random.rand(self.output_neurons,self.hidden_neurons)
+        delta_W = np.random.normal(self.output_neurons,self.hidden_neurons)
         new_weight_2 = self.weights[1] + delta_W        
         return np.array([new_weight_1, new_weight_2])
 
@@ -112,10 +112,11 @@ class SimulatedAnnealing():
         plt.ion()
         it = 0
         _,axs=plt.subplots(nrows=2,ncols=1)
-        while self.temperature > 0.1: # TODO: poner algun criterio
+        
+        while self.temperature > 0.1:
             self.trainingIteration()
             it += 1
-            axs[0].plot(self.temperature,self.currentEnergy,"*b") # TODO: error vs temp
+            axs[0].plot(self.temperature,self.currentEnergy,"*r") # TODO: error vs temp
         input("Press to continue...")
 
 if __name__=='__main__':
@@ -125,5 +126,3 @@ if __name__=='__main__':
     perceptron.setPatterns(XOR_input,XOR_output)
     perceptron.train()
     print(perceptron.forwardPropagation(XOR_input,perceptron.weights))
-
-    # Graficar la curva de temperatura que va bajando...
